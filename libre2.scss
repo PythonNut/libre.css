@@ -1,0 +1,2577 @@
+@charset "UTF-8";
+/*! libre.css - Copyright PythonNut (AoPS.com user)
+ * Revision: 1.9 dev, Revision date 2/1/14
+ * Credit where credit is due.
+ * Code is GNU GPL v3 or later
+ *
+ * Stats:
+ *   1.4k lines, 37KiB
+ *
+ * Credit to:
+ *   Nicolas Gallagher - Pure CSS icons (heavily modified)
+ *   Dojo (AoPS user)  - Indirectly helped me learned CSS
+ *   Red,asf,Neo,BasketBallStar,etc.
+ *   Countless AoPS users who have given such helpful comments
+ */
+@import url(https://fonts.googleapis.com/css?family=Quicksand:400,700);
+@mixin font($name, $file, $weight:""){
+  @font-face{
+    font-family: $name;
+    src: url("http://data.pythonnut.com/font/#{$file}.otf");
+    @if $weight != "" {
+      font-weight: $weight;
+    }
+  }
+}
+@mixin prefix($props, $prefixes:(webkit,moz,o)){
+  $defaults : (
+    transform   : (webkit,moz,ms,o),
+    hyphens     : (webkit,moz,o),
+    transition  : (webkit,moz,o),
+    user-select : (webkit,moz),
+    animation   : (webkit,moz),
+    box-sizing  : (moz)
+  );
+  @each $prop, $value in $props{
+    @each $prefix in map-get($defaults, $prop) or $prefixes{
+      @if $prefix == "webkit" and $prop == "transform" {
+        /* GPU accelerate webkit */
+        -#{$prefix}-#{$prop}: $value translateZ(0);
+      } @else {
+        -#{$prefix}-#{$prop}: $value;
+      }
+    }
+    #{$prop}: $value;
+  }
+}
+@mixin linear-gradient($dir,$stops:null,$type:null,$comment:null){
+  
+  @if $stops == null{
+    $stops   : $dir;
+    $dir     : 180deg;
+    $comment : "bottom [implied]";
+  }
+  
+  $type : $type or "";
+  // allow omission of degrees
+  @if type-of($dir) == "number" and unitless($dir){
+    $dir  : $dir + 0deg;
+  }
+  
+  $deg:(
+    "top",    "top right",
+    "right",  "bottom right",
+    "bottom", "bottom left",
+    "left",   "top left"
+  );
+  @if index($deg, $dir) != null{
+    // Recursive mixins FTW
+    @include linear-gradient((index($deg,$dir)-1)*45deg,$stops,$type,$dir)
+  }
+  
+  @else{
+    // some helpful documentation
+    @if $comment{ /* Gradient to #{$comment} (#{$dir} with 0deg @ N) */ }
+    @else{ /* Gradient at #{$dir} with 0deg @ N */ }
+    $map:(
+      180deg : "",    // 180deg is default
+    );
+    $rmap:(
+      180deg : "",    // 180deg is default
+      90deg : "left", // 0deg   == left
+      0deg : "bottom" // -90deg == bottom
+    );
+    
+    $rdir         : unquote(map-get($rmap,$dir)) or $dir;
+    $dir          : unquote(map-get($map,$dir))  or $dir;
+    $parsed_stops : "";
+    $first        : true;
+    $last_pos     : null;
+    
+    // allow fuzzy fractions instead of percent
+    $fractional:true;
+    @each $pos, $_ in $stops{
+      @if unit($pos) != "" or $pos > 1{
+        $fractional:false;
+      } 
+    }
+    
+    @each $pos, $color in $stops{
+      // skip first colon on no angle case
+      @if $dir == "" and $first{ $first: false; }
+      @else { $parsed_stops : $parsed_stops + ", "; }
+      
+      // fuzz the map so we can get duplicate keys
+      @if $last_pos != null and comparable($last_pos, $pos){
+        @if abs($last_pos - $pos) < 0.0101 { // fuzz here
+                                             $pos : $last_pos;
+                                           }
+      }
+      $last_pos: $pos;
+      
+      // convert to percent from fraction if applicable
+      @if $fractional{
+        $pos : $pos * 100;
+      }
+      
+      // allow omission of percent
+      $pos : $pos + if(unit($pos)=="","%","");
+      
+      $parsed_stops : $parsed_stops + "#{$color} #{$pos}";
+    }
+    
+    background#{$type}: -webkit-linear-gradient($rdir#{$parsed_stops});
+    background#{$type}: -moz-linear-gradient($rdir#{$parsed_stops});
+    background#{$type}: -o-linear-gradient($rdir#{$parsed_stops});
+    background#{$type}: linear-gradient($dir#{$parsed_stops});
+  }
+}
+@mixin reset($props){
+  @each $prop in $props {
+    @if index((
+      background background-image
+      pointer-events
+    ), $prop) { #{$prop}: none; }
+    @else if index((
+      width height
+    ), $prop) { #{$prop}: 100%; }
+    @else { #{$prop}: 0; }
+  }
+}
+@mixin shift($x, $y:""){
+  position: relative;
+  @if $y == "" { top: $x; }
+  @else {  
+    left: $x; top: $y;
+  }
+}
+@mixin host($name, $root:0){
+  @if $root == 0 {
+    @extend %#{$name};
+  }
+  @at-root %#{$name}{
+    /* source for %#{$name} */
+    @content
+  }
+}
+@mixin import($s){
+  /* css hosted in %#{$s} */
+  @extend %#{$s};
+}
+// a root host helper
+@mixin multi($name,$props){
+  @include host($name, $root:1){
+    @include prefix($props);
+  }
+}
+/*
+@include font(titillium-title, TitilliumTitle20);
+@include font(titillium, TitilliumText25L003);
+@include font(titillium, TitilliumText25L001, bold);
+*/
+@-webkit-keyframes error{to{background:#B00}}
+@-moz-keyframes    error{to{background:#B00}}
+@keyframes         error{to{background:#B00}}
+$bg: #ffffff;
+$fg: #000000;
+@include host("reset", $root:1){
+  @include reset((
+    background border margin padding
+  ));
+}
+@include multi("rotate45",(
+  transform: rotate(-45deg)
+));
+@include multi("null-transform",(
+  transform: none
+));
+@include multi("transition10",(
+  transition: 1s ease-in-out
+));
+@include multi("transition02",(
+  transition: .2s ease-in-out
+));
+@include multi("transition03",(
+  transition: .3s ease-in-out .1s
+));
+@include multi("transition05",(
+  transition: .5s ease-in-out
+));
+@include multi("ghost",(
+  user-select: none
+));
+@include host("void", $root: 1){
+  display: none;
+};
+@include host("pseudo", $root: 1){
+  position: absolute;
+  display: block;
+  content: "";
+};
+@include host("inline-hidden", $root: 1){
+  font-size: 0;
+  position: relative;
+  display: inline-block;
+};
+@include multi("border-box",(
+  box-sizing: border-box
+));
+@include host("standard-box", $root: 1){
+  background: $bg !important;
+  border-radius: 4px;
+  border: 1px solid;/* #000 default */
+};
+/* === BEGIN MAIN === */
+html{overflow: auto;}
+body{
+  @include host(body-base){
+    position: absolute !important;
+    background: $bg;
+    @include reset((
+      top right
+    ));
+  }
+  @include reset((
+    left bottom
+  ));
+  text-rendering: optimizeLegibility;
+  color: $fg;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  font: calibri "DejaVu Sans" veranda sans-serif;
+}
+#wrapper{
+  @include import("reset");
+  width: 80%;
+  margin: 0 5% 0 5%;
+  padding: 50px 5% 160px 5%;
+}
+#main{
+  @include import("reset");
+  @include import("transition10");
+  width: 70%;
+}
+#side{
+  @include import("reset");
+  @include import("transition10");
+  width: 22.5%;
+  padding: 0 1% 0 6.5%;
+  text-align: left;
+}
+#content{
+  @include import("reset");
+  position: relative;
+  top: 190px;
+}
+/*-- CSS for header --*/
+#header{
+  @include import("reset");
+  @include import(transition03);
+  @include host(header-dock){
+    position: absolute;
+    left: 13%;
+    width: 74%;
+    border: 2px solid; /* #000 default */
+  }
+  top: 90px;
+  height: 80px;
+  background: url(http://data.pythonnut.com/rotate/rotate.php) center;
+  background-color: rgba(0, 0, 0, 0.3);
+  background-size: cover;
+  border-radius: 20px 20px 0px 0px;
+  overflow: visible;
+  &:hover{
+    background-color: transparent;
+  }
+  &:after{
+    @include import("pseudo");
+    @include reset((
+      top left width height
+    ));
+    background-color: inherit;
+    border-radius: 20px 20px 0 0;
+  }
+  h1{
+    @include import("transition03");
+    @include shift(-70px);
+    height: 60px;
+    font: .7em quicksand, calibri, sans-serif;
+    text-align: center;
+    box-shadow: inset -20px 0px 30px 5px #fff;
+    background: $bg;
+    &:hover{
+      box-shadow: none;
+      background: transparent;
+    }
+    &:after{
+      @include import("pseudo");
+      @include reset((
+        left bottom pointer-events
+      ));
+      top: -20px;
+      width: 100%;
+      box-shadow: inherit;
+    }
+    &:before{
+      @include import("pseudo");
+      @include reset((
+        height width
+      ));
+      left: 100%;
+      background: inherit;
+    }
+  }
+}
+/*-- CSS for archives --*/
+.archive-row{
+  @include import("transition10");
+  margin-left: .8em;
+  &:first-child{
+    margin-top: 1em;
+  }
+  &:last-child{
+    margin-bottom: -1.5em;
+  }
+  &:hover{
+    background: lightgrey;
+    border-radius: 10em 0 0 10em;
+    @include prefix((
+      transform: translate(2em),
+      transition: 0.3s ease-in-out
+    ));
+  }
+}
+.archive-row,
+.archive-row a{
+  color: $fg;
+  font-family: quicksand;
+  font-weight: 700;
+}
+#archive-widget{
+  position: relative;
+  div[id^="month_"]{
+    margin-bottom: 1em;
+  }
+  img{
+    @include import("transition03");
+    @include shift(-1px);
+    border-radius: 0;
+    padding: 2px;
+    margin: 10px 8px 0 0;
+    width: 0;
+    height: 0;
+    background: #333;
+    @include prefix((
+      transform: scale(.5, 5)
+    ));
+  }
+  &:hover img{
+    @include import("transition05");
+    @include import("null-transform");
+    box-shadow: 0 0 0 2px rgba(0,0,0,.1);
+    background: rgba(0,0,0,.1);
+    border-radius: 99em;
+  }
+  &:after{
+    @include import("pseudo");
+    width: 25%;
+    height: 100%;
+    top: 2em;
+    right: 100%;
+  }
+  strong{
+    position: relative;
+    margin: 0;
+    padding: 10px;
+    &:hover img{
+      @include import("transition03");
+      box-shadow: 0 0 0px 30px rgba(0,0,0,.2);
+      background: transparent;
+      @include prefix((
+        transition: .1s ease-in-out
+      ));
+    }
+    &:after{
+      @include import("pseudo");
+      width: 3.5em;
+      top: 10px;
+      bottom: 10px;
+      right: 0;
+      background: rgba(255,255,255,.5);
+    }
+  }
+}
+/*-- CSS for post new entry link --*/
+#post-new-entry-p{
+  @include import("ghost");
+  position: relative;
+  > img {
+    @include import("void");
+  }
+  &:before{
+    @include import("pseudo");
+    height: 250%;
+    width: 200%;
+    top: -100%;
+    right: -10%;
+  }
+  &:after{
+    position: absolute;
+    top: -.45em;
+    left: 2em;
+    background: $bg;
+    width: 5em;
+    text-align: center;
+    line-height: 13px;
+    height: 15px;
+    content:"compose";
+  }
+  &:hover a{
+    @include import("transition02");
+    background: $bg !important;
+    box-shadow: 0 0 0px 20px #eeeeee;
+  }
+}
+a#post-new-entry{
+  @include import("transition05");
+  @include import("inline-hidden");
+  display: block;
+  background: transparent;
+  white-space: nowrap;
+  width: 25px;
+  height: 25px;
+  left: 0;
+  top: -10px;
+  border-radius: 99px;
+  &:before, &:after{
+    @include import("pseudo");
+    top: 50%;
+    margin-left: -25px;
+    background: #000;
+    left: 31px;
+    top: 14.5px;
+  }
+  &:before{
+    @include host(entry-pencil-b){
+      width: 5px;
+      height: 5px;
+      @include prefix((
+        transform: skew(-10deg, -10deg)
+      ));
+    }
+  }
+  &:after{
+    @include import("rotate45");
+    width: 13px;
+    height: 6px;
+    border-left: 1px solid #fff;
+    margin-top: -5px;
+  }
+}
+.total-posts{
+  padding-top: 1em;
+  float: right;
+  position: relative;
+  top: -20px
+}
+/*-- CSS for postform --*/
+#postform{
+  width: 140%;
+  textarea{
+    @include import("border-box");
+    @include reset((
+      border-bottom margin border-radius
+    ));
+  }
+  [value="Submit"]{
+    @include import("button-right");
+    /* no idea why I need this */
+    margin-top: -12px;
+    border-radius: 0 0 3px 0;
+    background: #eee;
+  }
+  [value="Preview"]{
+    @include import("button-left");
+    background: $bg;
+  }
+}
+#options-panel [type="checkbox"]{
+  margin: 0 0 1em;
+  vertical-align: sub;
+}
+/*-- CSS for entries --*/
+hr{
+  border: none;
+  border-top: 1px dashed #ddd;
+}
+.entry{
+  margin-bottom: 20px;
+  border-bottom: none;
+  border: 0 !important;
+  @at-root .entrywrap{
+    @include import("standard-box");
+    @include host(entrywrap-common){
+      padding: 1em;
+      font: 1.5em calibri,sans-serif;
+    }
+  }
+  > h1 > a,
+  > h2 > a,
+  > h2{
+    font: bold 1.1em quicksand, calibri, sans-serif;
+    color: $fg;
+    text-decoration: none;
+  }
+  
+  > h1, > h2{
+    margin-left: 8px;
+  }
+  
+  > h2{
+    @include host(entry-smart-date){
+      @include import("transition02");
+      @include import("ghost");
+      color: $bg;
+      
+      img{
+        @include import("void");
+      }
+      strong{
+        @include import("transition05");
+        display: inline-block;
+        @include prefix((
+          transform: translate(-1.4em)
+        ));
+      }
+      strong a{
+        @include host(entry-strong-a){
+          @include import("transition03");
+          display: inline-block;
+          @include prefix((
+            transform: skewX(-20deg),
+          ));
+          font-size: 1em;
+          font-family: quicksand;
+          font-weight: bold;
+        }
+      }
+      a:hover{
+        @include host(entry-a-h) {
+          @include import("null-transform");
+          text-decoration: none;
+        }
+      }
+      &:hover{
+        @include import("transition05");
+        color: $fg;
+        strong{
+          @include import("transition02");
+          @include import("null-transform");
+        }
+        > a:before{
+          background: #eeeeee;
+        }
+      }
+      > a:before{
+        @include import("transition05");
+        position: relative;
+        display: inline-block;
+        content: "";
+        font-size: 150%;
+        margin-right: 3px;
+        background: #aaaaaa;
+        border-radius: 99em;
+        width: 10px;
+        height: 10px;
+        top: 1px;
+      }
+    }
+  }
+}
+.row1, .row2{ 
+  .clear{
+    padding: 0 !important;
+  }
+}
+div.commentwrap{
+  @include import("standard-box");
+  @include import("entrywrap-common");
+  width: 90%;
+  position: relative;
+  overflow: visible;
+  
+  .author img {
+    margin: 0 !important;
+  }
+  &:before, &:after{
+    @include import("pseudo");
+    @include host(comment-common){
+      top: 100%;
+      left: 50%;
+      border-style: solid;
+    }
+  }
+  &:before{
+    margin-left: -30px;
+    border-width: 19px 19px 0;
+    border-color: $fg transparent;
+  }
+  &:after{
+    margin-left: -28px;
+    border-width: 17px 17px 0;
+    border-color: $bg transparent;
+  }
+}
+div.comment {
+  border: 0;
+  &:nth-last-child(2) > :after,
+  &:nth-last-child(2) > :before{
+    display: none;
+  }
+}
+.efooter{
+  @include import("ghost");
+}
+/* === CSS for images === */
+.entry img, #side img {
+  max-width: 100%;
+}
+img[src^="./images/smilies"]{
+  vertical-align:text-bottom;
+  margin: 0 !important;
+}
+img.latexcenter{
+  margin: .5em auto !important;
+  display: block;
+}
+embed{
+  width: 100%;
+}
+/* w3c filters */
+img:not(.latex){
+  filter: grey;
+  filter: url(data:image/svg+xml;UTF-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSI+PGRlZnM+PGZpbHRlciBpZD0iZyI+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjwvZGVmcz48L3N2Zz4g#g);
+  -webkit-filter: grayscale(100%);
+  -webkit-transition: .3s ease-in-out;
+  margin: .5em 0;
+  border-radius: 3px;
+  &:hover {
+    -webkit-filter: grayscale(0%);
+    filter: none;
+  }
+}
+/* CSS for shouts and blog errors */
+#shout_post li[class^="row"]{
+  @include import("border-box");
+  @include import("standard-box");
+  display: block;
+  word-wrap: break-word;
+  position: relative;
+  padding: .25em 1em 1em;
+  width: 100%;
+  margin-bottom: 5%;
+  overflow-y: visible;
+  
+  &:before, &:after{
+    @include import("pseudo");
+    @include import("comment-common");
+  }  
+  
+  &:before{
+    margin-left: -20.5px;
+    border-width:15px 15px 0;
+    border-color: $fg transparent;
+  }
+  
+  &:after{
+    margin-left: -18.38px;
+    border-width:13px 13px 0;
+    border-color: $bg transparent;
+  }
+  &:last-child{
+    &:before, &:after{
+      @include import("void");
+    }
+  }
+  /* fix bad list selector that causes
+   * lists to be unstyled in shouts */
+  li:not([class]){
+    list-style: disc;
+    margin-left: 2em;
+  }
+}
+fieldset{
+  @include import("reset");
+  /* fix for fieldset on FF */
+  /* bugzilla.mozilla.org/show_bug.cgi?id=261037 */
+  display: table-column;
+  width: 100% !important;
+}
+#side,textarea{
+  /* force hyphenation */
+  @include prefix((
+    hyphens: auto
+  ));
+}
+.shout_footer{
+  @include import("ghost");
+  input{
+   position: relative;
+    margin: 0;
+    top: 3px;
+    @include host(scale07){
+      @include prefix((
+        transform: scale(.7)
+      ));
+    }
+  }
+}
+/*-- CSS for links --*/
+a:link,
+a:visited{
+  color: #444;
+  text-decoration: none;
+}
+a:visited{
+  text-decoration: line-through;
+}
+a:hover{
+  text-decoration: underline;
+  color: #888;
+}
+/*-- CSS for nav box --*/
+#navigation_box{
+  @include import("standard-box");
+  @include host(navbox-base){
+    @include import("header-dock");
+    border: 2px solid;
+    overflow: hidden;
+    top: 170px;
+    background: #fff;
+    height: 20px;
+    border-radius: 0 0 20px 20px;
+    padding: 10px 0 10px 0;
+    z-index: 1;
+  }
+  @at-root #blog-errors{
+    @include import("navbox-base");
+  }
+  a{
+    top: 3px;
+    padding: 15px 15px 15px 20px;
+    color: #000;
+    @include host(navbox-a){
+      position: relative;
+      white-space: nowrap;
+    }
+  }
+  @at-root #left_navigation_box{
+    white-space: nowrap;
+    
+    a:before, a:after{
+      @include import("pseudo");
+      border-style:solid;
+      border-color: transparent;
+      left: 100%;
+      -o-transform: translate(0,400px);
+      -moz-transform: scaleY(.999);
+    }
+    a:before{
+      top: -18px;
+      border-width: 40px 0 40px 12px;
+      border-left-color: #000;
+    }
+    a:after{
+      top: -2px;
+      border-width: 24px 0 24px 8px;
+      border-left-color: #fff;
+    }
+  }
+  @at-root #right_navigation_box{
+    @include import("border-box");
+    @include import("body-base");
+    @include import("navbox-a");
+    height: 20px;
+    width: 45px;
+    border-radius: 0 0 20px 0 !important;
+    box-shadow: 0 0 10px 10px #fff;
+    a:before, a:after, &:after{
+      @include import("pseudo");
+      background: $fg;
+      @include prefix((
+        transform: rotate(45deg)
+      ));
+    }
+    &:after{
+      left:29px;
+      width:3px;
+      height:5px;
+      top: 13px;
+      background: $bg;
+      z-index: 10000;
+    }
+    a{
+      @include import("border-box");
+      @include import("navbox-a");
+      display: block;
+      top: 0;
+      height: 40px !important;
+      width: 40px !important;
+      border-left: 6px solid #000;
+      color: transparent !important;
+      background: #fff;
+      border-radius: 0 0 10px 0;
+      z-index: 10000;
+      &:before{
+        left:16px;
+        width:4px;
+        height:15px;
+        top: 15px;
+      }
+      &:after{
+        left:18px;
+        width:9px;
+        height:9px;
+        top: 13px;
+        border-radius:8px;
+      }
+    }
+  }
+}
+/*-- CSS for LaTeX --*/
+/* CSS for code and quotes */
+div.quotecontent,
+div.codecontent,
+div.quotetitle,
+div.codetitle{
+  background: $bg;
+  border: 1px solid; /* #000 default */
+  padding-left: 1em;
+}
+div.quotecontent,
+div.codecontent{
+  border-radius: 0 0 4px 4px;
+  border-top: none;
+  padding: 1em;
+  margin-bottom: 1em;
+  + br {
+    @include import("void");
+  }
+}
+div.quotetitle,
+div.codetitle{
+  border-radius: 4px 4px 0 0;
+  margin-top: 1em;
+  height: 1.3em;
+}
+/*
+.quotetitle:after{
+    position: relative;
+    content:"wrote";
+    padding-right: 5px;
+    background: white;
+    left: -35px;
+    color: #aaaaaa;
+}
+*/
+div.quotecontent{
+  position: relative;
+  font-family: quicksand;
+  &:after, &:before{
+    @include import("pseudo");
+    -moz-transition: .3s ease-in-out;
+    font-size: 2em;
+    color: #aaa;
+  }
+  &:after{
+    content: '\201D';
+    bottom: -.2em;
+    right: .25em;
+  }
+  &:before{
+    content: '\201C';
+    top: .25em;
+    left: .25em;
+  }
+  &:-moz-any(*):hover{
+    &:after, &:before{
+      color: $fg
+    }
+  }
+}
+div.codecontent{
+  @include import("transition03");
+  position: relative;
+  
+  font: 1em consolas, monospace;
+  padding: .2em 1em;
+  @include linear-gradient((
+    1.2em : #fff,
+    1.201em : transparent
+  ));
+  
+  background-color: #fff;
+  line-height: 1.2em;
+  background-size: 100% 2.4em;
+  background-position: 0 .25em;  
+  font-size: .9em;
+
+  @include prefix((
+    hyphens: none
+  ));
+  
+  #side & {
+    /* sooo hacky */
+    background-position: 0 .6em;
+  }
+  
+  &:hover{
+    background-color: #f1f1f1;
+  }
+  :only-child{
+    padding-top: 1.75px;
+  }
+  > div:before{
+    @include import("pseudo");
+    content: attr(class);
+    top: -1.4em;
+    right: .5em;
+    left: 0;
+    color: $fg;
+    background: white;
+    line-height: 1.2em;
+    padding-left: 1em;
+    font-weight: bold;
+    font-family: quicksand;
+    border-radius: 3px;
+    text-transform: capitalize;
+  }
+  ol{
+    padding-left: 2em;
+    counter-reset: item
+  }
+  li{
+    display: block;
+    &:before{
+      content: counter(item); 
+      display: inline-block;
+      min-width: 2em;
+      counter-increment: item;
+      color: #aaa; 
+      margin-left: -2em;
+    }
+  }
+}
+.codecontent a{
+  &:before{
+    content:"click to see docs";
+    position: absolute;
+    top: -1.4em;
+    color: #073642;
+    right: 0em;
+    border-radius: 0 3px 0 0;
+    background: #93A1A1;
+    padding: 0 1em;
+    height: 1.4em;
+    opacity: 0;
+    transition: 0.3s ease-in-out 1s;
+  }
+  &:hover:before{
+    opacity: 1;
+    transition: 0.3s ease-in-out;
+  }
+}
+/*-- CSS for input elements --*/
+input,
+textarea,
+.genmed{
+  @include import("border-box");
+  @include import("transition03");
+  margin: 10px 10px 10px 0;
+  border-radius: 3px;
+  font: calibri;
+}
+#side textarea{
+  @include import("border-box");
+  display: inline-block;
+  width: 100%;
+}
+[type="button"],
+[type="submit"],
+[type="reset"],
+.genmed{
+  @include import("transition02");
+  margin: 0.5em 0 0.5em 0;
+  padding: .5em 1em !important;
+  background-color: #fff;
+  border: 1px solid; /* black default */
+  border-radius: 3px;
+  font: bold 1em calibri, helvetica, sans-serif !important;
+  color: #666;
+}
+
+[type="button"]:hover,
+[type="submit"]:hover,
+[type="reset"]:hover,
+.genmed:hover{
+  background: #ddd;
+  cursor: pointer;
+}
+[type="button"]:active,
+[type="submit"]:active,
+[type="reset"]:active,
+.genmed:active{
+  box-shadow: 0 0 3px #999;
+}
+textarea, [type="text"]{
+  padding: 1em;
+  border: 1px solid;
+  background: #fff;
+  margin-bottom: 0;
+  border-radius: 3px;
+  &:hover{
+    background: #f3f3f3;
+  }
+  &:focus{
+    background: #f3f3f3;
+  }
+}
+/* CSS for blog errors */
+#blog-errors{
+  @include reset((
+    margin padding
+  ));
+  font-size: 2em;
+  height: 80px;
+  border-radius: 20px 20px 0px 0px;
+  top: 90px;
+  z-index: 1;
+  background: rgba(190,0,0,.9);
+  
+  @include prefix((
+    animation: error 1s 0s infinite alternate
+  ));
+}
+/* CSS for icons */
+@mixin lwh($l,$w,$h){
+  left: #{$l}px;
+  width: #{$w}px;
+  height: #{$h}px;
+}
+.widget-title{
+  position: relative;
+  margin: 0px 0px  10px 15px;
+  overflow: visible;
+  margin-top: 3em;
+  &:before, &:after{
+    @include import("pseudo");
+    top: 50%;
+    margin-left: -25px;
+    filter: alpha(opacity=0);
+  }
+}
+#side .block {
+  padding: 0;
+}
+/* search */
+.widget:not([id]) {
+  .widget-title{
+    &:before{
+      width: 6px;
+      height: 6px;
+      border: 3px solid; /* #000 default */
+      margin: -8px -21px;
+      border-radius: 12px;
+    }
+    &:after{
+      @include import("rotate45");
+      @include lwh(10,3,7);
+      margin: 0px -21px;
+      background: $fg;
+    }
+  }
+}
+/* tags widget */
+#tags-widget .widget-title{
+  &:before{
+    @include host(tags-b-common){
+      @include import("rotate45");
+      @include lwh(6,9,15);
+      margin-top: -8px;
+      background: #000;
+      border-radius: 5px 5px 0 0;
+    }
+  }
+  &:after{
+    @include host(tags-a-common){
+      @include lwh(7,3,3);
+      margin-top: -4px;
+      background: #fff;
+      border-radius: 5px;
+    }
+  }
+}
+/* contributor widget */
+#contrib-widget .widget-title{
+  &:before{
+    @include lwh(4,16,5);
+    margin-top: 1px;
+    background: #000;
+    border-radius: 5px 5px 0 0;
+  }
+  &:after{
+    @include lwh(9,6,10);
+    margin-top: -7px;
+    background: #000;
+    border-radius: 5px 5px 5px 5px / 5px 5px 10px 10px;
+  }
+}
+/* categories widget */
+#categories-widget .widget-title{
+  &:before{
+    @include lwh(4,16,12);
+    margin-top: -6px;
+    background: #000;
+    border-radius: 0 0 1px 1px;
+  }
+  &:after{
+    @include lwh(6,6,2);
+    margin-top: -8px;
+    background: #000;
+    border-radius: 1px 1px 0 0;
+  }
+}
+/* archives widget */
+#archive-widget .widget-title{
+  &:before, &:after{
+    @include host(archive-icon-common){
+      @include lwh(8,12,2);
+      margin-top: -9px;
+      border-width: 6px 0;
+      border-style: double;
+      border-color: #000;
+    }
+  }
+  &:after{
+    left: 4px;
+    width: 2px;
+  }
+}
+#archive-widget .widget-title
+/* stats widget*/
+#stats-widget .widget-title{
+  &:before{
+    left: 3px;
+    border: 8px solid; /* #000 default */
+    margin-top: -7px;
+    border-radius: 16px;
+  }
+  &:after{
+    @include lwh(11,8,8);
+    border-width: 0 0 2px 2px;
+    border-style: solid;
+    border-color: #fff;
+    margin-top: -8px;
+    background: #000;
+    border-radius: 0 16px 0 0;
+  }
+}
+/* about owner widget */
+#about-owner-widget .widget-title{
+  &:before{
+    @include import("entry-pencil-b");
+    left: 3px;
+    margin-top: 2px;
+    background: #000;
+  }
+  &:after{
+    @include import("rotate45");
+    @include lwh(3,13,6);
+    border-left: 1px solid #fff;
+    margin-top: -3px;
+    background: #000;
+  }
+}
+/* shouts widget */
+#shouts-widget .widget-title{
+  &:before{
+    width: 16px;
+    height: 10px;
+    margin: -8px 0 0 -21px;
+    background: #000;
+    border-radius: 2px;
+  }
+  &:after{
+    left: 8px;
+    border: 2px solid transparent;
+    border-top-color: #000;
+    border-left-color: #000;
+    margin: 2px -21px;
+  }
+}
+/* rss widget */
+#feed-widget .widget-title{
+  &:before{
+    @include lwh(3,5,5);
+    background: #000;
+    border-radius: 5px;
+  }
+  &:after{
+    top: 0;
+    @include lwh(3,8,8);
+    border-width: 5px 5px 0 0;
+    border-style: double;
+    border-color: #000;
+    border-radius: 0 25px 0 0;
+  }
+}
+/* custom block */
+#custom-block-widget{
+  .widget-title{
+    &:before{
+      left: 1px;
+      border-style: solid;
+      border-color: transparent;
+      border-width: 8px 7px;
+      border-bottom-color: #000;
+      margin-top: -16px;
+    }
+    &:after{
+      @include lwh(3,2,4);
+      border-style: solid;
+      border-color: #000 #000 transparent;
+      border-width: 3px 4px 0;
+      margin-top: 0;
+    }
+  }
+  .quotetitle {
+    @include import("void");
+  }
+  .quotecontent{
+    @include import("transition10");
+    position: fixed;
+    opacity: 0;
+    top: 45px;
+    right: -6.5em;
+    width: 90px;
+    height: 1.5em;
+    padding: 3px;
+    @include prefix((
+      transform: rotate(90deg)
+    ));
+  }
+}
+/* Custom syntax highlighting */
+.codecontent{
+  [style="color: #06c; font-weight: bold;"],
+  [style="color: #003366; font-weight: bold;"],
+  [style="color: #ff7700;font-weight:bold;"],
+  [style="color: #003366; font-weight: bold;"],
+  [style="color: #b1b100;"]{
+    color: $fg !important;
+    font-weight: bold !important;
+  }
+  [style="color: #009900; font-style: italic;"],
+  [style="color: #808080; font-style: italic;"],
+  [style="color: #ff0000; font-style: italic;"]{
+    color: grey !important;
+    font-style: italic !important;
+  }
+  [style="color: #66cc66;"],
+  [style="color: green;"],
+  [style="color: #dc143c;"],
+  [style="color: #000000;"],
+  [style="color: #993333;"],
+  [style="color: #339900;"],
+  [style="color: #0000ff;"],
+  [style="color: #993333;"],
+  [style="color: #000066;"],
+  [style="color: #800000; font-weight: normal;"],
+  [style="color: #990000;"]{
+    color: rgb(80,80,80) !important;
+  }
+  [style="color: #5d478b; font-style: italic;"],
+  [style="color: #3366CC;"],
+  [style="color: #CC0000;"],
+  [style="color: red;"],
+  [style="color: #008000;"],
+  [style="color: #ff0000;"],
+  [style="color: #aaaadd; font-weight: bold;"],
+  [style="color: #933;"],
+  [style="color: #6666ff;"],
+  [style="color: #cc66cc;"],
+  [style="color: #ff4500;"],
+  [style="color: #0000dd;"],
+  [style="color: #2222D0; font-weight: normal;"],
+  [style="color: #00A000; font-weight: normal;"]{
+    color: $fg !important;
+    font-style: italic;
+  }
+  [style="color: #006600;"],
+  [style="color: #000099; font-weight: bold;"],
+  [style="color: #000066; font-weight: bold;"],
+  [style="color: #cc00cc;"],
+  [style="color: #3333ff;"],
+  [style="color: #009900;"],
+  [style="color: #cccc00; font-weight: bold;"],
+  [sytle="color: #cccc00; font-weight: bold;"],
+  [style="color: #F00000; font-weight: normal;"],
+  [style="color: #2222D0; font-weight: normal;"]{
+    color: $fg !important;
+    font-weight: normal !important;
+  }
+}
+
+/* Smart Date shout style */
+/* // not ready yet
+.shout_footer{
+  width: 100%;
+  input{
+    @include import("transition03");
+  }
+  @at-root #side {
+    label{
+      @include import("transition03");
+      position: relative;
+      display: block;
+      color: transparent;
+      max-height: 1.4em;
+      margin: -1em 16px -1em 1.5em;
+      &:hover{
+        color: $fg;
+      }
+      &:before{
+        @include import("pseudo");
+        @include import("transition03");
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        left: -1.35em;
+        top: 1px;
+        border-radius: 99em;
+        background: #aaa;
+      }
+    }
+  }
+  &:hover label{
+    max-height: 3em;
+    &:before{
+      opacity: 0;
+    }
+    a{
+      @include prefix((
+        transform: skewX(-10deg)
+      ));
+    }
+  }
+  a{
+    @include import("entry-strong-a");
+    @include prefix((
+      transform: translate(-1.4em) skewX(-10deg)
+    ));
+    &:hover{
+      @include import("entry-a-h");
+    }
+  }
+  :checked + :before{
+    opacity: 0;
+  }
+  &:not(:hover) > input:not(:checked){
+    opacity: 0;
+  }
+}
+*/
+/* CSS for MODACTIONS Mark I */
+.entry .modactions li{
+  &:first-child{
+    @include host(entry-edit){
+      @include host(modactions-style){
+        @include import("inline-hidden");
+        height: 0px;
+        padding: 4px;
+        width: 20px;
+      }
+      &:before{
+        @include import("pseudo");
+        @include import("transition02");
+        left:10px;
+        border-width:2px 0 2px 2px;
+        border-style:solid;
+        border-color:transparent #555;
+        margin-top:-1px;
+        pointer-events: none;
+      }
+      :before{
+        @include import("pseudo");
+        @include import("transition02");
+        @include lwh(4,10,10);
+        border:2px solid #555;
+        margin-top:-6px;
+        background:transparent;
+        border-radius:3px;
+      }
+      :after{
+        @include import("pseudo");
+        @include import("transition02");
+        @include import("rotate45");
+        @include lwh(10,10,3);
+        border:1px solid #fff;
+        background: #555;
+        margin-top:-6px;
+      }
+      &:hover{
+        &:before{
+          border-left-color: #aaa;
+          @include prefix((
+            transform: translate(0,-2px)
+          ));
+        }
+        :before{
+          border-color:#aaa;
+        }
+        :after{
+          background:#aaa;
+          @include prefix((
+            transform: translateY(-2px) rotate(-45deg)
+          ));
+        }
+      }
+    }
+  }
+  &:last-child{
+    @include host(entry-delete){
+      @include import("transition02");
+      @include import("inline-hidden");
+      width: 20px;
+      padding: 4px 0px 4px 4px;
+      margin-right: -4px;
+      
+      &:after{
+        @include import("pseudo");
+        @include import("transition02");
+        @include lwh(6,1,7);
+        border-right:3px double #555;
+        border-left:1px solid #555;
+        margin-top:-2px;
+        pointer-events: none;
+      }
+      :after{
+        @include import("pseudo");
+        @include import("transition02");
+        @include lwh(2,9,11);
+        margin-top:-6px;
+        border:2px solid #555;
+        background:transparent;
+      }
+      &:before{
+        @include import("pseudo");
+        @include import("transition02");
+        @include lwh(4,5,2);
+        top: -5px;
+        border:2px solid #555;
+        border-bottom: 0;
+        background: transparent;
+        border-radius: 2px 2px 0 0;
+      }
+      &:hover{
+        &:before, &:after, :after{
+          border-color: #a00;
+          background:transparent;
+        }
+        &:before{
+          @include prefix((
+            transform: translate(2px, -3px) rotate(30deg) scaleX(1.5)
+          ));
+          height: 0;
+        }
+      }
+    }
+  }
+}
+.cfooter {
+  margin: 0 -1em -.8em -.25em;
+  
+  .edit-icon{
+    @include import("entry-edit");
+  }
+  .delete-icon{
+    @include import("entry-delete");
+  }
+  .report-icon{
+    @include import("modactions-style");
+    :before {
+      @include import("pseudo");
+      @include import("transition02");
+      @include lwh(3,12,12);
+      border:2px solid #555;
+      margin-top:-7px;
+      background:transparent;
+      border-radius: 16px;
+    }
+    :after {
+      @include import("pseudo");
+      @include import("rotate45");
+      @include import("transition02");
+      @include lwh(4,13,3);
+      margin-top: 0;
+      background: transparent;
+    }
+    &:hover{
+      :before {
+        border: 2px solid #a00;
+      }
+      :after{
+        background: #a00;
+      }
+    }
+  }
+  .author{
+    @include import("entry-smart-date");
+    font-size: 1.2em;
+    > a:before{
+      top: 1px;
+    }
+    strong {
+      @include prefix((
+        transform: translate(-1em)
+      ));
+    }
+  }
+  .modactions{
+    @include shift(3px);
+  }
+}
+/* CSS for tags */
+.post-tags{
+  font-size: 0;
+  position: relative;
+  padding-left: 25px;
+  a{
+    font-size: 1rem;
+    margin-right: .5em;
+    padding-right: .5em;
+    &:not(:last-child){
+      border-right: 1px solid #555555;
+    }
+  }
+  /* code also in #tags-widget */
+  &:before{
+    @include import("pseudo");
+    @include import("tags-b-common");
+    margin-top:2px;
+    background:#555555;
+  }
+  &:after{
+    @include import("pseudo");
+    @include import("tags-a-common");
+    margin-top:-14px;
+  }
+}
+/* CSS for ACTIONS Mark I */
+.actions{
+  margin-top: 5px;
+  margin-bottom: -5px;
+  li:first-child{
+    @include import("transition05");
+    @include import("inline-hidden");
+    max-width: 18px;
+    text-align: left;
+    padding-right: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    :after, :before{
+      @include import("pseudo");
+      @include import("archive-icon-common");
+      top: -3px;
+      margin-top: 0;
+      border-width:6px 0;
+      border-style:double;
+      border-color: #555555;
+    }
+    :after{
+      left:4px;
+      width:2px;
+    }
+    &:hover{
+      max-width: 200px;
+      :before{
+        border-color:#aaaaaa;
+        background:transparent;
+      }
+    }
+    a{
+      font-size: 12px;
+      padding-left: 30px;
+    }
+  }
+  li:last-child{
+    @include import("transition05");
+    @include import("inline-hidden");
+    max-width: 18px;
+    padding: 0 4px 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    :before{
+      @include import("pseudo");
+      @include import("transition03");
+      background: #555555;
+      width:16px;
+      height:10px;
+      top: 0;
+      border-radius:2px;
+    }
+    :after{
+      @include import("pseudo");
+      @include import("transition03");
+      left: 16px;
+      border: 2px solid transparent;
+      border-top-color: #555555;
+      border-left-color: #555555;
+      margin-top: -5px;
+      background: transparent;
+    }
+    &:hover{
+      max-width: 200px;
+      :before{
+        background: #aaaaaa;
+      }
+      :after{
+        border-top-color:#aaaaaa;
+        border-left-color:#aaaaaa;
+      }
+    }
+    a{
+      font-size: 12px;
+      padding-left: 30px;
+    }
+  }
+}
+%black-solid{
+  border-style: solid;
+  border-color: #000;
+}
+input{
+  &[type="submit"], &[type="reset"]{
+    @include import("black-solid");
+    -moz-box-sizing: border-box;
+    min-width: 0;
+    width: 50% !important;
+    float: left;
+    margin: 0;
+    padding: .75em 0 .5em 0 !important;
+    text-transform: uppercase;
+    box-shadow: none;
+    /*border-radius: 0 0 0 3px;*/
+  }
+  &[type="text"]{
+    @include import("black-solid");
+    margin-bottom: 0 !important;
+    border-width: 1px;
+    border-radius: 3px 3px 0 0;
+    pointer-events: auto;
+  }
+  + div{
+    padding: 0 !important;
+    margin: 0 !important;
+    input.button2{
+      margin: 0;
+      background: #eee;
+      border-width: 0 1px 1px 1px;
+      pointer-events: auto;
+      border-radius: 0 0 0 3px;
+    }
+  }
+  @at-root #delete_selected_shouts{
+    @include import("black-solid");
+    background: #eee;
+    border-width: 1px 1px 1px 1px;
+    border-radius: 3px 0 0 3px;
+    margin: 1em 0 1em 0;
+  }
+  @at-root #delete_all_shouts{
+    @include import("black-solid");
+    background: #fff;
+    border-width: 1px 1px 1px 0;
+    border-radius: 0 3px 3px 0;
+    margin: 1em 0 1em 0;
+  }
+}
+#side {
+  @at-root #user-menu-widget ul{
+    text-align: left;
+  }
+  .fields1{
+    white-space: nowrap;
+    position: relative;
+    min-width: 0;
+    &:after{
+      @include import("transition03");
+      @include import("pseudo");
+      top: 0;
+      width: 200%;
+      height: 30px;
+      @include linear-gradient("right",(
+        40 : rgba(255,255,255,0),
+        50 : #fff
+      ));
+    }
+    &:hover:after{
+      opacity: 0;
+    }
+    [onclick="insert_text"]{
+      display: inline-block;
+      float: left;
+    }
+    textarea{
+      @include import("black-solid");
+      border-radius: 3px 3px 0 0;
+      border-width: 1px 1px 0 1px !important;
+      resize: none;
+      @at-root #explain{
+        @include import("transition03");
+        @include import("black-solid");
+        border-width: 0 1px 0 1px;
+        padding: 0.5em;
+        background: #fff;
+        &:empty {
+          padding: 0;
+        }
+        @at-root textarea:hover + #explain {
+          background: #eee;
+        }
+        @at-root textarea:focus + #explain {
+          background: #ddd;
+        }
+      }
+    }
+  }
+  .submit-buttons{
+    position: relative;
+    @at-root #shoutbox_submit{
+      @include host(button-left){
+        @include import("black-solid");
+        border-width: 1px;
+        background: #eee;
+        border-radius: 0 0 0 3px;
+      }
+      text-indent: 15%;
+    }
+    @at-root #shoutbox_reset{
+      @include host(button-right){
+        @include import("black-solid");
+        background: #fff;
+        border-radius: 0 0 3px 0;
+        border-width: 1px 1px 1px 0;
+      }
+      text-indent: 15%;
+    }
+    &:before, &:after{
+      @include import("pseudo");
+      pointer-events: none;
+    }
+    &:before{
+      width: 7px;
+      border-bottom: 2px solid #555;
+      border-right: 2px solid #555;
+      left: 23%;
+      top: 5px;
+      height: 14px;
+      margin-left: -2em;
+      @include prefix((
+        transform: rotate(40deg)
+      ));
+    }
+    &:after{
+      width: 14px;
+      left: 73%;
+      top: 6px;
+      height: 14px;
+      margin-left: -2em;
+      border-radius: 99em;
+      border-style: solid;
+      border-width: 2px;
+      border-color: #000 #555 #aaa #ddd;
+    }
+  }
+  @at-root #blog_searchform {
+    > fieldset{
+      pointer-events: none;
+    }
+    .button2{
+      height: 2.5em;
+    }
+    + div {
+      @include import("border-box");
+      padding: 0 !important;
+      width: 50%;
+      height: 2.5em;
+      border: 3px solid;
+      border-width: 0 1px 1px 0;
+      margin-left: 50%;
+      text-align: center;
+      margin-top: -2.5em;
+      border-radius: 0 0 3px 0;
+      a{
+        @include import("border-box");
+        display: block;
+        line-height: 2.5em;
+        a:hover{
+          text-decoration: none;
+        }
+      }
+    }
+  }
+}
+#blog_keywords + div input{
+}
+.btnbbcode{
+  @include host(postform-button){
+    @include import("border-box");
+    @include reset((
+      margin border-radius
+    ));
+    border-width: 1px 1px 0 0;
+    display: inline-block;
+    float: left;
+    height: 30px;
+  }
+  &:first-of-type{
+    border-width: 1px 1px 0 1px;
+    border-radius: 3px 0 0 0;
+  }
+}
+.genmed{
+  @include import("postform-button");
+  clear: right;
+  padding: 0 1em 0 1em !important;
+  border-radius: 0 3px 0 0;
+}
+.gensmall{
+  @include shift(2px, 4px);
+  border-radius: 3px;
+  border: 1px inset #DDD;
+  vertical-align: super;
+  @include reset((
+    padding margin
+  ));
+}
+#smiley-box{
+  display: block;
+  clear: left;
+  margin: 0 !important;
+  padding-bottom: 1.5em !important;
+  padding-left: 2em !important;
+  border-radius: 0 3px 0 0;
+  border-style: solid;
+  border-width: 1px 1px 0 1px;
+  br, hr{
+    @include import("void");
+  }
+  em, strong{
+    margin-right: 1em;
+  }
+  em:not(:last-of-type){
+    border-right: 1px solid #aaa;
+    padding-right: 1.5em;
+  }
+  img{
+    position: relative;
+    top: 8px;
+    vertical-align: sub;
+  }
+  .helpline{
+    clear: both;
+  }
+  > a + br + a{
+    font-size: 0;
+    &:after{
+      display: inline-block;
+      font-size: 0.75rem;
+      content: "[...]";
+      padding-left: 0.5em;
+      padding-right: 1.5em;
+      border-right: 1px solid #aaa;
+      margin-right: 1em;
+    }
+  }
+}
+/* Animated navbox experiment */
+/*
+#left_navigation_box{
+  pointer-events: none;
+  color: transparent;
+  a{
+    pointer-events: auto;
+    transition: 0.2s ease-in-out;
+    &:hover{
+      padding: 15px 5em 15px 6em;
+      margin-left: -1em;
+      background: #eee;
+    }
+    &:after{
+      @extend %transition02;
+    }
+    &:hover:after{
+      border-left-color: #eee;
+    }
+  }
+  \/\* reverse logical z-index hack \*\/
+  @for \$i from 1 to 6{
+    :nth-child(#{\$i}) {
+      z-index: -\$i;
+    }
+  }
+}
+*/
+/* postform fancy options */
+#postform ul{
+  padding: 0;
+  li{
+    @include import("border-box");
+    @include host(postform-li-common){
+      display: inline-block;
+      float: left;
+      height: 2em;
+      padding-top: .4em;
+      text-align: center;
+      width: 33.3%;
+    }
+    margin-top: -0.6em;
+    + li{
+      border-left: 2px solid;
+    }
+  }
+}
+#tabs{
+  @include import("border-box");
+  @include host(tabs-dock){
+    border-style: solid;
+    height: 3em;
+    margin-top: 3.5em;
+    float: left;
+    width: 50%;
+  }
+  border-width: 1px;
+  border-radius: 3px 0 0 3px;
+}
+#options-panel{
+  @include import("border-box");
+  @include import("tabs-dock");
+  position: relative;
+  margin-bottom: 3.5em;
+  
+  border-width: 1px 1px 1px 0;
+  border-radius: 0 3px 3px 0;
+  div{
+    @include import("border-box");
+    @include import("postform-li-common");
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    float: left;
+    height: 2em;
+    padding-top: .4em;
+    margin-top: .4em;
+    margin-bottom: .5em;
+    width: 33.3%;
+    text-align: center;
+    color: #555;
+    + div{
+      border-left: 2px solid #000;
+    }
+    input{
+      margin-right: .2em !important;
+      @include import("scale07");
+    }
+  }
+}
+/* fancy pagination module 
+ * A bit too verbose for my taste
+ * TODO: fix that*/
+#shout_post >*> div[style]{
+  @at-root{
+    .total-posts{
+      /* force alignment with main */
+      margin-right: 1em;
+    }
+    &, .total-posts{
+      color: transparent;
+      font-size: 0.8em;
+      & a{
+        @include host("pagination-common"){
+          display: inline-block;
+          color: transparent;
+          width: 1.5em;
+          height: 1.5em;
+          background: #ddd;
+          border-radius: 99px;
+          line-height: 1.5em;
+          text-align: center;
+          transition: 0.3s ease-in-out;
+          position: relative;
+          &:after{
+            @include host("pagination-ghost"){
+              display: block;
+              position: absolute;
+              content:"";
+              height: 100%;
+              top: -2px;
+              left: -3px;
+              right: -3px;
+              border: solid transparent;
+              border-width: 2px 0 2px 0;
+              transition: 0.3s ease-in-out;
+            }
+          }
+        }
+        &:last-child{
+          &:after{
+            left: -100%;
+          }
+          &:before{
+            display: block;
+            position: absolute;
+            content:">";
+            color: black;
+            width: 100%;
+            height: 100%;
+            left: -100%;
+            margin-left: -1px;
+          }
+        }
+      }
+      &:hover a{
+        background: transparent;
+        color: black;
+      }
+    }
+    &, .page-number + span{
+      strong{
+        @include import("pagination-common");
+        background: #aaa;
+        color: #555;
+        &:after{
+          @include import("pagination-ghost");
+        }
+      }
+    }
+    .total-posts:hover .page-number + span, &:hover{
+      strong{
+        color: black;
+        border-radius: 0;
+        background: #eee;
+        &:after{
+          border-color: black;
+        }
+      }
+    }
+    .total-posts:hover, &:hover{
+      a:after{
+        border-color: grey;
+      }
+    }
+  }
+}
+
+/* this is a module to make Libre use Solarized colors */
+/* Neo, I know you're reading this :) */
+/* TODO: 
+ *   + get feedback
+ *   + finish porting all colors
+ *   + backport zebrastripes to >div
+ */
+body {
+  background: #002b36;
+  color: #93a1a1;
+}
+#header h1{
+  background: #002b36;
+  box-shadow: inset -20px 0 30px 5px #002b36;
+  color: #93a1a1;
+}
+#header {
+  border: 0;
+}
+#navigation_box{
+  border: 0;
+  background: #073642 !important;
+}
+#left_navigation_box a{
+  color: #93a1a1;
+}
+#left_navigation_box a:before{
+  border-left-color: #657b83;
+}
+#left_navigation_box a:after{
+  border-left-color: #073642;
+}
+#right_navigation_box{
+  background: #073642;
+  box-shadow: 0 0 10px 10px #073642;
+}
+div[class^="row"]{
+  background: #073642 !important;
+}
+#right_navigation_box a{
+  border-left-color: #657b83;
+  background: #073642;
+}
+#right_navigation_box a:after,
+#right_navigation_box a:before{
+  background: #93a1a1;
+}
+#right_navigation_box:after{
+  background: #073642;
+}
+#post-new-entry-p:after{
+  background: #002b36;
+}
+a#post-new-entry:before{
+  background: #93a1a1;
+}
+a#post-new-entry:after{
+  border-left: 1px solid #002b36;
+  background: #93a1a1;
+}
+.entry > h1 a{
+  color: #93a1a1;
+}
+.entry > h2 {
+  color: #002b36;
+}
+.entry > h2 strong a{
+  color: #839496;
+}
+.entry > h2 > a:before{
+  background: #839496;
+}
+.entrywrap{
+  background: #073642 !important;
+  border: 0 !important;
+}
+div.codetitle,div.quotetitle{
+  background: #586e75;
+  border: 0;
+  color: #073642;
+}
+div.codecontent,div.quotecontent{
+  background: #002b36 !important;
+  border: 0;
+}
+/* Custom syntax highlighting */
+.codecontent [style="color: #06c; font-weight: bold;"],
+.codecontent [style="color: #003366; font-weight: bold;"],
+.codecontent [style="color: #ff7700;font-weight:bold;"],
+.codecontent [style="color: #000000; font-weight: bold;"],
+.codecontent [style="color: #003366; font-weight: bold;"],
+.codecontent [style="color: #b1b100;"] {
+  color: #657b83 !important;
+  font-weight: bold !important;
+}
+.codecontent [style="color: #009900; font-style: italic;"],
+.codecontent [style="color: #808080; font-style: italic;"],
+.codecontent [style="color: #ff0000; font-style: italic;"] {
+  color: #586e75 !important;
+  font-style: italic !important;
+}
+.codecontent [style="color: #66cc66;"],
+.codecontent [style="color: green;"],
+.codecontent [style="color: #dc143c;"],
+.codecontent [style="color: #000000;"],
+.codecontent [style="color: #993333;"],
+.codecontent [style="color: black;"],
+.codecontent [style="color: #339900;"],
+.codecontent [style="color: #0000ff;"],
+.codecontent [style="color: #993333;"],
+.codecontent [style="color: #000066;"],
+.codecontent [style="color: #800000; font-weight: normal;"],
+.codecontent [style="color: #990000;"] {
+  color: #839496 !important;
+  
+}
+/* comments */
+.codecontent [style="color: #5d478b; font-style: italic;"],
+.codecontent [style="color: #3366CC;"],
+.codecontent [style="color: #CC0000;"],
+.codecontent [style="color: red;"],
+.codecontent [style="color: #008000;"],
+.codecontent [style="color: #ff0000;"],
+.codecontent [style="color: #aaaadd; font-weight: bold;"],
+.codecontent [style="color: #933;"],
+.codecontent [style="color: #483d8b;"],
+.codecontent [style="color: #6666ff;"],
+.codecontent [style="color: #cc66cc;"],
+.codecontent [style="color: #ff4500;"],
+.codecontent [style="color: #0000dd;"],
+.codecontent [style="color: #2222D0; font-weight: normal;"],
+.codecontent [style="color: #00A000; font-weight: normal;"] {
+  color: #657b83 !important;
+  font-style: italic; 
+}
+.codecontent [style="color: #006600;"],
+.codecontent [style="color: #000099; font-weight: bold;"],
+.codecontent [style="color: #000066; font-weight: bold;"],
+.codecontent [style="color: #cc00cc;"],
+.codecontent [style="color: #3333ff;"],
+.codecontent [style="color: #009900;"],
+.codecontent [style="color: #0000cd;"],
+.codecontent [style="color: #cccc00; font-weight: bold;"],
+.codecontent [sytle="color: #cccc00; font-weight: bold;"],
+.codecontent [style="color: #F00000; font-weight: normal;"],
+.codecontent [style="color: #2222D0; font-weight: normal;"] {
+  color: #657b83 !important;
+  font-weight: normal !important; 
+}
+
+div.codecontent li:before{
+  color: #657b83;
+}
+div.codecontent:hover{
+  background: #002b36;
+}
+div.codecontent > div:before{
+  background: #586e75;
+  color: #073642;
+}
+div.quotetitle:after{
+  background: #586e75 !important;
+  color: #2f525b;
+}
+a:link{
+  color: #586e75;
+}
+a:visited{
+  color: #657b83;
+}
+.archive-row a{
+  color: #586e75;
+}
+#archive-widget strong{
+  color: #657b83;
+}
+#archive-widget strong img{
+  background: #657b83;
+  z-index: -1;
+}
+#archive-widget:hover strong img{
+  box-shadow: 0 0 0 2px rgba(88, 110, 117, 0.5);
+}
+#archive-widget strong:hover img{
+  box-shadow: 0 0 0 30px rgba(88, 110, 117, 0.5);
+}
+#archive-widget strong:after{
+  background: rgba(0, 43, 54, 0.5);
+}
+.hidden-label{
+  color: #586e75;
+}
+#shout_post li[class^="row"]{
+  background: #073642 !important;
+  border: 0 !important;
+}
+#shout_post li[class^="row"]:after{
+  display: none;
+}
+#shout_post li[class^="row"]:before{
+  border-top-color: #073642;
+}
+.shout_footer label:before{
+  background: #839496;
+}
+.shout_footer label a{
+  color: #839496;
+}
+.widget-title{
+  color: #657b83;
+}
+#shouts-widget .widget-title:before{
+  background: #657b83;
+}
+#shouts-widget .widget-title:after{
+  border-color: #657b83 transparent transparent #657b83;
+}
+input[type="submit"]{
+  background: rgba(133, 153, 0, 0.5) !important; /*#859900 !important;*/
+  color: #002b36;
+  text-shadow: none;
+  border: 0 !important;
+}
+input[type="submit"]:hover{
+  background: rgba(133, 153, 0, 1) !important; /*#859900 !important;*/
+}
+input[type="reset"]{
+  background: rgba(220, 50, 47, 0.5) !important; /*#dc322f !important;*/
+  color: #002b36;
+  text-shadow: none;
+  border: 0 !important;
+}
+input[type="reset"]:hover{
+  background: #dc322f !important;
+}
+#side textarea{
+  resize: none;
+  background: #073642;
+  border: 0 !important;
+}
+#delete_all_shouts{
+  background: rgba(220, 50, 47, 0.5) !important; /*#dc322f !important;*/
+}
+#delete_all_shouts:hover{
+  background: rgba(220, 50, 47, 1) !important; /*#dc322f !important;*/
+}
+#side .fields1:after{
+  @include prefix((
+    pointer-events: none
+  ));
+  background: linear-gradient(to right, rgba(0, 43, 54, 0) 40%, #002b36 50%);
+}
+
+input[type="text"]{
+  background: #073642;
+  border: 0;
+  color: #93a1a1;
+  text-shadow: none;
+}
+#blog_searchform + div > a {
+  background: #839496;
+  color: #002b36;
+  border: 0;
+}
+img.latex{
+  display: inline-block;
+  background: #eee8d5;
+  padding: 0.2em;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+#side .submit-buttons:after{
+  border-color:  #002b36;
+}
+#side .submit-buttons:before{
+  border-color:  #002b36;
+}
+#archive-widget .widget-title:before, #archive-widget .widget-title:after, .actions li:first-child *:after, .actions li:first-child *:before{
+  border-color: #839496 !important;
+}
+#contrib-widget .widget-title:before,
+#contrib-widget .widget-title:after{
+  background: #839496;
+}
+#categories-widget .widget-title:before,
+#categories-widget .widget-title:after{
+  background: #839496;
+}
+#tags-widget .widget-title:before{
+  background: #839496; 
+}
+#tags-widget .widget-title:after{
+  background: #002b36;
+}
+#custom-block-widget .widget-title:before{
+  border-bottom-color: #839496; 
+}
+#custom-block-widget .widget-title:after{
+  border-color: #839496;
+}
+#about-owner-widget .widget-title:after{
+  border-left-color: #002b36 !important;
+  background: #839496;
+}
+#about-owner-widget .widget-title:before{
+  background: #839496;
+}
+#stats-widget .widget-title:after{
+  border-left-color: #002b36 !important;
+  border-bottom-color: #002b36 !important;
+  background: #839496;
+}
+#stats-widget .widget-title:before{
+  background: #839496 !important;
+}
+.widget:not([id]) .widget-title:after{
+  background: #839496;
+}
+.widget:not([id]) .widget-title:before{
+  border-color: #839496;
+}
+#feed-widget .widget-title:after{
+  border-color: #839496;
+}
+#feed-widget .widget-title:before{
+  background: #839496;
+}
+#feed-widget img{
+  background: #eee8d5;
+  padding: 1em;
+}
+img[src^="./images/smilies"]{
+  background: #eee8d5;
+}
+.fields1 a[onclick] img{
+  background: #eee8d5;
+  margin-left: -3px;
+  height: 20px;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  border-radius: 0;
+}
+.fields1 > :first-child{
+  margin-left: 3px;
+}
+.fields1 :first-child img{
+  padding-left: 3px;
+  border-radius: 3px 0 0 3px !important;
+}
+.fields1 a:last-of-type img{
+  padding-right: 3px;
+  border-radius: 0 3px 3px 0 !important;
+}
+a#post-new-entry{
+  background: #002b36 !important;
+}
+#post-new-entry-p:hover a#post-new-entry{
+  background: #002b36 !important;
+  box-shadow: 0 0 0px 20px #586e75;
+}
+#shout_post >*> div[style] a, .total-posts a{
+  background: #073642;
+  color: transparent;
+}
+#shout_post >*> div[style] strong, .page-number + span strong{
+  background: #586e75;
+  color: #eee8d5;
+}
+#shout_post >*> div[style]:hover strong, .total-posts:hover .page-number + span strong{
+  background: #073642;
+  color: #eee8d5;
+}
+#shout_post >*> div[style]:hover strong:after, .total-posts:hover .page-number + span strong:after{
+  border-color: #839496;
+}
+.total-posts:hover a:after, #shout_post >*> div[style]:hover a:after{
+  border-color: #586e75;
+}
+.total-posts:hover a, #shout_post >*> div[style]:hover a{
+  color: #eee8d5;
+}
+.total-posts a:last-child:before, #shout_post >*> div[style] a:last-child:before{
+  color: #586e75;
+}
+
+.actions li:last-child a:after{
+  border-top-color: #839496;
+  border-left-color: #839496;
+}
+.actions li:last-child a:before{
+  background: #839496 !important;
+}
+.entry .modactions li:first-child :after, .cfooter .edit-icon :after {
+  background: #839496 !important;
+  border-color: #073642;
+}
+.entry .modactions li:first-child :before, .cfooter .edit-icon :before {
+  border-color: #839496;
+}
+.entry .modactions li:first-child:before, .cfooter .edit-icon:before{
+  border-color: transparent #839496 !important;
+}
+.entry .modactions li:last-child :after, .cfooter .delete-icon :after,
+.entry .modactions li:last-child:after, .cfooter .delete-icon:after,
+.entry .modactions li:last-child:before, .cfooter .delete-icon:before{
+  border-color: #839496 !important;
+}
+div.quotecontent{
+  text-indent: 1em;
+}
+div.quotecontent:before{
+  text-indent: 0em;
+}
+.quotecontent div.codecontent,
+.quotecontent div.quotecontent{
+  border: solid #073642 !important;
+  border-width: 0 2px 2px 2px !important;
+}
+.quotecontent div.codetitle,
+.quotecontent div.quotetitle{
+  border: solid #073642 !important;
+  border-width: 2px 2px 0 2px !important;
+}
+textarea + #explain{
+  border: 0;
+  background: #073642 !important;
+}
+textarea:focus + #explain{
+  background: #586e75 !important;
+}
+.entry h2:hover{
+  color: #586e75;
+}
+.post-tags:after{
+  background: #073642;
+}
+.post-tags:before{
+  background: #839496;
+}
+.cfooter .report-icon :before{
+  border-color: #839496;
+}
+.archive-row:hover{
+  border-color: #073642;
+}
+div.commentwrap {
+  background: #073642 !important;
+  border: 0 !important;
+}
+.commentwrap:before{
+  border-top-color: #073642 !important;
+}
+.commentwrap:after{
+  display: none !important;
+}
+.cfooter .author{
+  color: transparent;
+}
+.cfooter .author:hover{
+  color: #586e75;
+}
+input,textarea{
+  color: #586e75;
+}
+
+/* invert LaTeX with precise filters on Firefox */
+img.latex:-moz-any(*,*), img.latexcenter:-moz-any(*,*){
+  filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'grayscale\'><feColorMatrix type=\'matrix\' values=\'-0.643 0 0 0 0.553   -0.708 0 0 0 0.631   -0.689 0 0 0 0.631 0 0 0 1 0\'/></filter></svg>#grayscale") !important;
+  
+  padding: 0;
+  background: none;
+  
+  li[class^="row"] &,
+  div.commentwrap &,
+  div.entrywrap & {
+    filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'grayscale\'><feColorMatrix type=\'matrix\' values=\'-0.643 0 0 0 0.553   -0.688 0 0 0 0.631   -0.669 0 0 0 0.631 0 0 0 1 0\'/></filter></svg>#grayscale") !important;
+  }
+  
+  ul:empty + a & {
+    filter: none !important;
+  };
+}
+img[src^="./images/smilies/"]{
+  border-radius: 9em;
+}
+/* safari3+, chrome1+ imprecise filters */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  img.latex, img.latexcenter {
+    -webkit-filter: invert(88%) !important;
+    background: none;
+    padding: 0;
+    
+    li[class^="row"] &,
+    div.commentwrap &,
+    div.entrywrap &{
+      filter: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\'><filter id=\'grayscale\'><feColorMatrix type=\'matrix\' values=\'-0.643 0 0 0 0.553   -0.688 0 0 0 0.631   -0.669 0 0 0 0.631 0 0 0 1 0\'/></filter></svg>#grayscale") !important;
+    }
+  }
+}
+
+
+
