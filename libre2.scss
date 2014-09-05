@@ -1804,6 +1804,7 @@ input{
       @include import("border-box");
       padding: 0 !important;
       width: 50%;
+      background: #839496;
       height: 2.5em;
       border: 3px solid;
       border-width: 0 1px 1px 0;
@@ -1811,6 +1812,7 @@ input{
       text-align: center;
       margin-top: -2.5em;
       border-radius: 0 0 3px 0;
+      border-radius: 1em;
       a{
         @include import("border-box");
         display: block;
@@ -2163,14 +2165,17 @@ div.codecontent,div.quotecontent{
 .codecontent [style="color: #003366; font-weight: bold;"],
 .codecontent [style="color: #ff7700;font-weight:bold;"],
 .codecontent [style="color: #000000; font-weight: bold;"],
+.codecontent [style="color: #009900; font-weight: bold;"],
 .codecontent [style="color: #003366; font-weight: bold;"],
-.codecontent [style="color: #b1b100;"] {
+.codecontent [style="color: #b1b100;"],
+.codecontent [style="color: #7a0874; font-weight: bold;"] {
   color: #657b83 !important;
   font-weight: bold !important;
 }
-.codecontent [style="color: #009900; font-style: italic;"],
+.codecontent [style="color: #090; font-style: italic;"],
 .codecontent [style="color: #808080; font-style: italic;"],
-.codecontent [style="color: #ff0000; font-style: italic;"] {
+.codecontent [style="color: #ff0000; font-style: italic;"],
+.codecontent [style="color: #c20cb9; font-weight: bold;"] {
   color: #586e75 !important;
   font-style: italic !important;
 }
@@ -2204,7 +2209,8 @@ div.codecontent,div.quotecontent{
 .codecontent [style="color: #ff4500;"],
 .codecontent [style="color: #0000dd;"],
 .codecontent [style="color: #2222D0; font-weight: normal;"],
-.codecontent [style="color: #00A000; font-weight: normal;"] {
+.codecontent [style="color: #00A000; font-weight: normal;"],
+.codecontent [style="color: #7a0874; font-weight: bold;"] {
   color: #657b83 !important;
   font-style: italic; 
 }
@@ -2218,7 +2224,8 @@ div.codecontent,div.quotecontent{
 .codecontent [style="color: #cccc00; font-weight: bold;"],
 .codecontent [sytle="color: #cccc00; font-weight: bold;"],
 .codecontent [style="color: #F00000; font-weight: normal;"],
-.codecontent [style="color: #2222D0; font-weight: normal;"] {
+.codecontent [style="color: #2222D0; font-weight: normal;"],
+.codecontent [style="color: #007800;"] {
   color: #657b83 !important;
   font-weight: normal !important; 
 }
@@ -2573,5 +2580,13 @@ img[src^="./images/smilies/"]{
   }
 }
 
+div.quotecontent:after, div.quotecontent:before {
+  color: #073642; }
+div.quotecontent:-moz-any(*):hover:after, div.quotecontent:-moz-any(*):hover:before {
+  color: #93A1A1; }
 
-
+[type="text"] {
+  color: #586e75 !important; }
+[type="text"]:hover, [type="text"]:focus {
+  background: #073642;
+  color: #93a1a1 !important; }
