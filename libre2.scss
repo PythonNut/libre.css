@@ -2589,3 +2589,57 @@ div.quotecontent:-moz-any(*):hover:after, div.quotecontent:-moz-any(*):hover:bef
 [type="text"]:hover, [type="text"]:focus {
   background: #073642;
   color: #93a1a1 !important; }
+
+#postform textarea {
+  background: #073642;
+  border: none;
+}
+div#smiley-box {
+  border: none;
+  border-bottom: 2px solid #586e75;
+  background: #073642;
+}
+#postform input[type="button"], #postform span.genmed  {
+  background: #073642 !important;
+  border-top: none;
+  border-left: 1px #586e75;
+  border-color: #586e75;
+  color: #586e75;
+}
+#postform span.genmed {
+  border-right: none;
+}
+#postform select.gensmall {
+  background: #586e75;
+  border: 0;
+  margin-top: 2px;
+  color: #002b36;
+}
+#postform .fields1 {
+  color: transparent;
+}
+#postform .fields1 *{
+  color: #586e75;
+}
+#smiley-box a:first-of-type img {
+  border-radius: 3px 0 0 3px;
+  padding-left: 3px;
+}
+
+/* horrible hack */
+#smiley-box a[onclick="insert_text(':!:', true); return false;"] img {
+  border-radius: 0 3px 3px 0;
+  padding-right: 3px;
+}
+#smiley-box a[href="#"] img{
+  margin-bottom: 0;
+}
+#postform .submit-buttons input[onclick]{
+  background: #586e75 !important;
+}
+#postform .submit-buttons input[onclick]:hover{
+  background: #839496 !important;
+}
+#postform #subject {
+  border-radius: 3px;
+}
