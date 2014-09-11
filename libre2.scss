@@ -2643,3 +2643,16 @@ div#smiley-box {
 #postform #subject {
   border-radius: 3px;
 }
+#shout_post .submit-buttons:before, #shout_post .submit-buttons:after {
+  margin-top: -1px;
+}
+#shout_post .submit-buttons input {
+  padding-bottom: 5px !important;
+  padding-top: 7px !important;
+}
+#shoutbox_reset {
+  text-indent: 16%;
+}
+#shout_post .submit-buttons:after {
+  margin-left: -2.1em;
+}
